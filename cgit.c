@@ -6,6 +6,8 @@
  *   (see COPYING for full license text)
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "cgit.h"
 #include "cache.h"
 #include "cmd.h"
@@ -473,7 +475,8 @@ static char *find_default_branch(struct cgit_repo *repo)
 	info.req_ref = repo->defbranch;
 	info.first_ref = NULL;
 	info.match = 0;
-	for_each_branch_ref(find_current_ref, &info);
+	refs_for_each_branch_ref(get_main_ref_store(the_repository),
+				 find_current_ref, &info);
 	if (info.match)
 		ref = info.req_ref;
 	else
@@ -490,7 +493,8 @@ static char *guess_defbranch(void)
 	const char *ref, *refname;
 	struct object_id oid;
 
-	ref = resolve_ref_unsafe("HEAD", 0, &oid, NULL);
+	ref = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+				     "HEAD", 0, &oid, NULL);
 	if (!ref || !skip_prefix(ref, "refs/heads/", &refname))
 		return "master";
 	return xstrdup(refname);
@@ -631,7 +635,7 @@ static int prepare_repo_cmd(int nongit)
 		return 1;
 	}
 
-	if (get_oid(ctx.qry.head, &oid)) {
+	if (repo_get_oid(the_repository, ctx.qry.head, &oid)) {
 		char *old_head = ctx.qry.head;
 		ctx.qry.head = xstrdup(ctx.repo->defbranch);
 		cgit_print_error_page(404, "Not found",

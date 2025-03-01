@@ -6,6 +6,8 @@
  *   (see COPYING for full license text)
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "cgit.h"
 #include "ui-diff.h"
 #include "html.h"
@@ -258,8 +260,8 @@ static void header(const struct object_id *oid1, char *path1, int mode1,
 		htmlf("<br/>deleted file mode %.6o", mode1);
 
 	if (!subproject) {
-		abbrev1 = xstrdup(find_unique_abbrev(oid1, DEFAULT_ABBREV));
-		abbrev2 = xstrdup(find_unique_abbrev(oid2, DEFAULT_ABBREV));
+		abbrev1 = xstrdup(repo_find_unique_abbrev(the_repository, oid1, DEFAULT_ABBREV));
+		abbrev2 = xstrdup(repo_find_unique_abbrev(the_repository, oid2, DEFAULT_ABBREV));
 		htmlf("<br/>index %s..%s", abbrev1, abbrev2);
 		free(abbrev1);
 		free(abbrev2);
@@ -402,13 +404,13 @@ void cgit_print_diff(const char *new_rev, const char *old_rev,
 
 	if (!new_rev)
 		new_rev = ctx.qry.head;
-	if (get_oid(new_rev, new_rev_oid)) {
+	if (repo_get_oid(the_repository, new_rev, new_rev_oid)) {
 		cgit_print_error_page(404, "Not found",
 			"Bad object name: %s", new_rev);
 		return;
 	}
 	commit = lookup_commit_reference(the_repository, new_rev_oid);
-	if (!commit || parse_commit(commit)) {
+	if (!commit || repo_parse_commit(the_repository, commit)) {
 		cgit_print_error_page(404, "Not found",
 			"Bad commit: %s", oid_to_hex(new_rev_oid));
 		return;
@@ -416,7 +418,7 @@ void cgit_print_diff(const char *new_rev, const char *old_rev,
 	new_tree_oid = get_commit_tree_oid(commit);
 
 	if (old_rev) {
-		if (get_oid(old_rev, old_rev_oid)) {
+		if (repo_get_oid(the_repository, old_rev, old_rev_oid)) {
 			cgit_print_error_page(404, "Not found",
 				"Bad object name: %s", old_rev);
 			return;
@@ -424,12 +426,12 @@ void cgit_print_diff(const char *new_rev, const char *old_rev,
 	} else if (commit->parents && commit->parents->item) {
 		oidcpy(old_rev_oid, &commit->parents->item->object.oid);
 	} else {
-		oidclr(old_rev_oid);
+		oidclr(old_rev_oid, the_repository->hash_algo);
 	}
 
 	if (!is_null_oid(old_rev_oid)) {
 		commit2 = lookup_commit_reference(the_repository, old_rev_oid);
-		if (!commit2 || parse_commit(commit2)) {
+		if (!commit2 || repo_parse_commit(the_repository, commit2)) {
 			cgit_print_error_page(404, "Not found",
 				"Bad commit: %s", oid_to_hex(old_rev_oid));
 			return;
@@ -442,7 +444,7 @@ void cgit_print_diff(const char *new_rev, const char *old_rev,
 	if (raw) {
 		struct diff_options diffopt;
 
-		diff_setup(&diffopt);
+		repo_diff_setup(the_repository, &diffopt);
 		diffopt.output_format = DIFF_FORMAT_PATCH;
 		diffopt.flags.recursive = 1;
 		diff_setup_done(&diffopt);

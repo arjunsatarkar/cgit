@@ -6,6 +6,8 @@
  *   (see COPYING for full license text)
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "cgit.h"
 #include "ui-patch.h"
 #include "html.h"
@@ -31,7 +33,7 @@ void cgit_print_patch(const char *new_rev, const char *old_rev,
 	if (!new_rev)
 		new_rev = ctx.qry.head;
 
-	if (get_oid(new_rev, &new_rev_oid)) {
+	if (repo_get_oid(the_repository, new_rev, &new_rev_oid)) {
 		cgit_print_error_page(404, "Not found",
 				"Bad object id: %s", new_rev);
 		return;
@@ -44,7 +46,7 @@ void cgit_print_patch(const char *new_rev, const char *old_rev,
 	}
 
 	if (old_rev) {
-		if (get_oid(old_rev, &old_rev_oid)) {
+		if (repo_get_oid(the_repository, old_rev, &old_rev_oid)) {
 			cgit_print_error_page(404, "Not found",
 					"Bad object id: %s", old_rev);
 			return;
@@ -57,7 +59,7 @@ void cgit_print_patch(const char *new_rev, const char *old_rev,
 	} else if (commit->parents && commit->parents->item) {
 		oidcpy(&old_rev_oid, &commit->parents->item->object.oid);
 	} else {
-		oidclr(&old_rev_oid);
+		oidclr(&old_rev_oid, the_repository->hash_algo);
 	}
 
 	if (is_null_oid(&old_rev_oid)) {
@@ -78,7 +80,7 @@ void cgit_print_patch(const char *new_rev, const char *old_rev,
 			      "%s%n%n%w(0)%b";
 	}
 
-	init_revisions(&rev, NULL);
+	repo_init_revisions(the_repository, &rev, NULL);
 	rev.abbrev = DEFAULT_ABBREV;
 	rev.verbose_header = 1;
 	rev.diff = 1;

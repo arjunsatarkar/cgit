@@ -1,31 +1,35 @@
 #ifndef CGIT_H
 #define CGIT_H
 
-
-#include <git-compat-util.h>
 #include <stdbool.h>
 
-#include <cache.h>
-#include <grep.h>
-#include <object.h>
-#include <object-store.h>
-#include <tree.h>
+#include <git-compat-util.h>
+
+#include <archive.h>
 #include <commit.h>
-#include <tag.h>
-#include <diff.h>
 #include <diffcore.h>
-#include <strvec.h>
+#include <diff.h>
+#include <environment.h>
+#include <graph.h>
+#include <grep.h>
+#include <hex.h>
+#include <log-tree.h>
+#include <notes.h>
+#include <object.h>
+#include <object-name.h>
+#include <object-store.h>
+#include <path.h>
 #include <refs.h>
 #include <revision.h>
-#include <log-tree.h>
-#include <archive.h>
+#include <setup.h>
 #include <string-list.h>
+#include <strvec.h>
+#include <tag.h>
+#include <tree.h>
+#include <utf8.h>
+#include <wrapper.h>
 #include <xdiff-interface.h>
 #include <xdiff/xdiff.h>
-#include <utf8.h>
-#include <notes.h>
-#include <graph.h>
-#include <inttypes.h>
 
 /* Add isgraph(x) to Git's sane ctype support (see git-compat-util.h) */
 #undef isgraph
@@ -65,7 +69,7 @@ typedef enum {
 struct cgit_filter {
 	int (*open)(struct cgit_filter *, va_list ap);
 	int (*close)(struct cgit_filter *);
-	void (*fprintf)(struct cgit_filter *, FILE *, const char *prefix);
+	void (*fprintfp)(struct cgit_filter *, FILE *, const char *prefix);
 	void (*cleanup)(struct cgit_filter *);
 	int argument_count;
 };

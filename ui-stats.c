@@ -1,3 +1,13 @@
+/* ui-stats.c: generate stats view
+ *
+ * Copyright (C) 2006-2014 cgit Development Team <cgit@lists.zx2c4.com>
+ *
+ * Licensed under GNU General Public License v2
+ *   (see COPYING for full license text)
+ */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "cgit.h"
 #include "ui-stats.h"
 #include "html.h"
@@ -230,7 +240,7 @@ static struct string_list collect_stats(const struct cgit_period *period)
 		argv[4] = ctx.qry.path;
 		argc += 2;
 	}
-	init_revisions(&rev, NULL);
+	repo_init_revisions(the_repository, &rev, NULL);
 	rev.abbrev = DEFAULT_ABBREV;
 	rev.commit_format = CMIT_FMT_DEFAULT;
 	rev.max_parents = 1;

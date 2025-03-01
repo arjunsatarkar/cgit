@@ -6,6 +6,8 @@
  *   (see COPYING for full license text)
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "cgit.h"
 #include "ui-shared.h"
 #include "cmd.h"
@@ -662,12 +664,12 @@ void cgit_submodule_link(const char *class, char *path, const char *rev)
 		path[len - 1] = tail;
 }
 
-const struct date_mode *cgit_date_mode(enum date_mode_type type)
+const struct date_mode cgit_date_mode(enum date_mode_type type)
 {
 	static struct date_mode mode;
 	mode.type = type;
 	mode.local = ctx.cfg.local_time;
-	return &mode;
+	return mode;
 }
 
 static void print_rel_date(time_t t, int tz, double value,
@@ -1041,9 +1043,11 @@ static void print_header(void)
 			html("<form method='get'>\n");
 			cgit_add_hidden_formfields(0, 1, ctx.qry.page);
 			html("<select name='h' onchange='this.form.submit();'>\n");
-			for_each_branch_ref(print_branch_option, ctx.qry.head);
+			refs_for_each_branch_ref(get_main_ref_store(the_repository),
+						 print_branch_option, ctx.qry.head);
 			if (ctx.repo->enable_remote_branches)
-				for_each_remote_ref(print_branch_option, ctx.qry.head);
+				refs_for_each_remote_ref(get_main_ref_store(the_repository),
+							 print_branch_option, ctx.qry.head);
 			html("</select> ");
 			html("<input type='submit' value='switch'/>");
 			html("</form>");
@@ -1188,11 +1192,11 @@ void cgit_compose_snapshot_prefix(struct strbuf *filename, const char *base,
 	 * name starts with {v,V}[0-9] and the prettify mapping is injective,
 	 * i.e. each stripped tag can be inverted without ambiguities.
 	 */
-	if (get_oid(fmt("refs/tags/%s", ref), &oid) == 0 &&
+	if (repo_get_oid(the_repository, fmt("refs/tags/%s", ref), &oid) == 0 &&
 	    (ref[0] == 'v' || ref[0] == 'V') && isdigit(ref[1]) &&
-	    ((get_oid(fmt("refs/tags/%s", ref + 1), &oid) == 0) +
-	     (get_oid(fmt("refs/tags/v%s", ref + 1), &oid) == 0) +
-	     (get_oid(fmt("refs/tags/V%s", ref + 1), &oid) == 0) == 1))
+	    ((repo_get_oid(the_repository, fmt("refs/tags/%s", ref + 1), &oid) == 0) +
+	     (repo_get_oid(the_repository, fmt("refs/tags/v%s", ref + 1), &oid) == 0) +
+	     (repo_get_oid(the_repository, fmt("refs/tags/V%s", ref + 1), &oid) == 0) == 1))
 		ref++;
 
 	strbuf_addf(filename, "%s-%s", base, ref);

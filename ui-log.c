@@ -6,6 +6,8 @@
  *   (see COPYING for full license text)
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "cgit.h"
 #include "ui-log.h"
 #include "html.h"
@@ -80,7 +82,8 @@ void show_commit_decorations(struct commit *commit)
 				ctx.qry.showmsg, 0);
 			break;
 		case DECORATION_REF_TAG:
-			if (!read_ref(deco->name, &oid_tag) && !peel_iterated_oid(&oid_tag, &peeled))
+			if (!refs_read_ref(get_main_ref_store(the_repository), deco->name, &oid_tag) &&
+			    !peel_iterated_oid(the_repository, &oid_tag, &peeled))
 				is_annotated = !oideq(&oid_tag, &peeled);
 			cgit_tag_link(buf, NULL, is_annotated ? "tag-annotated-deco" : "tag-deco", buf);
 			break;
@@ -146,7 +149,7 @@ static int show_commit(struct commit *commit, struct rev_info *revs)
 	/* When we get here we have precisely one parent. */
 	parent = parents->item;
 	/* If we can't parse the commit, let print_commit() report an error. */
-	if (parse_commit(parent))
+	if (repo_parse_commit(the_repository, parent))
 		return 1;
 
 	files = 0;
@@ -330,7 +333,7 @@ static const char *disambiguate_ref(const char *ref, int *must_free_result)
 	struct strbuf longref = STRBUF_INIT;
 
 	strbuf_addf(&longref, "refs/heads/%s", ref);
-	if (get_oid(longref.buf, &oid) == 0) {
+	if (repo_get_oid(the_repository, longref.buf, &oid) == 0) {
 		*must_free_result = 1;
 		return strbuf_detach(&longref, NULL);
 	}
@@ -430,7 +433,7 @@ void cgit_print_log(const char *tip, int ofs, int cnt, char *grep, char *pattern
 	if (path)
 		strvec_push(&rev_argv, path);
 
-	init_revisions(&rev, NULL);
+	repo_init_revisions(the_repository, &rev, NULL);
 	rev.abbrev = DEFAULT_ABBREV;
 	rev.commit_format = CMIT_FMT_DEFAULT;
 	rev.verbose_header = 1;

@@ -6,6 +6,8 @@
  *   (see COPYING for full license text)
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "cgit.h"
 #include "ui-atom.h"
 #include "html.h"
@@ -97,7 +99,7 @@ void cgit_print_atom(char *tip, const char *path, int max_count)
 		argv[argc++] = path;
 	}
 
-	init_revisions(&rev, NULL);
+	repo_init_revisions(the_repository, &rev, NULL);
 	rev.abbrev = DEFAULT_ABBREV;
 	rev.commit_format = CMIT_FMT_DEFAULT;
 	rev.verbose_header = 1;
